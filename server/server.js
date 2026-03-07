@@ -39,7 +39,7 @@ app.use('/api/bills', billRoutes);
 
 // Serve Static Files in Production (no wildcard routes needed)
 const fs = require('fs');
-const clientBuildPath = path.resolve(__dirname, '..', 'client', 'dist');
+const clientBuildPath = path.join(__dirname, 'public');
 console.log('[Server] clientBuildPath:', clientBuildPath);
 console.log('[Server] dist exists:', fs.existsSync(clientBuildPath));
 console.log('[Server] index.html exists:', fs.existsSync(path.join(clientBuildPath, 'index.html')));
