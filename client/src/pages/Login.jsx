@@ -44,8 +44,8 @@ const Login = () => {
                 <div className="glass-card p-8">
                     {/* Demo hint */}
                     <div className="bg-primary-900/30 border border-primary-700/40 rounded-xl p-3 mb-6 text-center">
-                        <p className="text-xs text-primary-300 font-medium">🎮 Demo Account</p>
-                        <p className="text-xs text-slate-400 mt-0.5">demo@shopease.com / demo1234</p>
+                        {/* <p className="text-xs text-primary-300 font-medium">🎮 Demo Account</p>
+                        <p className="text-xs text-slate-400 mt-0.5">demo@shopease.com / demo1234</p> */}
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-4">
