@@ -6,10 +6,10 @@
     "install-all": "npm install && npm install --prefix server && npm install --prefix client",
     "client-install": "npm install --prefix client",
     "server-install": "npm install --prefix server",
-    "build": "npm run build --prefix client",
+    "build": "cd client && npm install && npm run build",
     "start": "cd server && node server.js",
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-    "heroku-postbuild": "npm run build --prefix client"
+    "heroku-postbuild": "cd client && npm install && npm run build"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
