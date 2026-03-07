@@ -12,14 +12,14 @@ const billRoutes = require('./routes/bills');
 
 const app = express();
 
-// Middleware
+// CORS config for API routes only
 const allowedOrigins = [
     'http://localhost:5173',
     'http://localhost:5174',
     process.env.CLIENT_URL
 ].filter(Boolean);
 
-app.use(cors({
+const corsOptions = {
     origin: (origin, callback) => {
         if (!origin || allowedOrigins.some(ao => origin.startsWith(ao))) {
             callback(null, true);
@@ -28,7 +28,11 @@ app.use(cors({
         }
     },
     credentials: true
-}));
+};
+
+// Apply CORS ONLY to API routes (not static files)
+app.use('/api', cors(corsOptions));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(morgan('dev'));
 
