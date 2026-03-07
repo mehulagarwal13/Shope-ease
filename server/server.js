@@ -37,38 +37,24 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/bills', billRoutes);
 
-// Serve Static Files in Production
+// Serve Static Files in Production (no wildcard routes needed)
 if (process.env.NODE_ENV === 'production') {
     const clientPath = path.join(__dirname, '../client/dist');
     app.use(express.static(clientPath));
-
-    app.get('/:any*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(clientPath, 'index.html'));
-        } else {
-            res.status(404).json({ message: 'API route not found' });
-        }
-    });
-} else {
-    // Health check (only for dev, production handles it via static index or '*' catch-all)
-    app.get('/api/health', (req, res) => res.json({ status: 'ShopEase API is running ✅' }));
 }
-
-// 404 handler for API routes
-app.use('/api/:any*', (req, res) => res.status(404).json({ message: 'API route not found' }));
-
-// 404 handler (general)
-app.use((req, res) => {
-    if (process.env.NODE_ENV === 'production' && !req.path.startsWith('/api')) {
-        return res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-    }
-    res.status(404).json({ message: 'Route not found' });
-});
 
 // Error handler
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
+// Catch-all: serve index.html for frontend routes in production (use middleware, not route)
+app.use((req, res) => {
+    if (process.env.NODE_ENV === 'production' && !req.path.startsWith('/api')) {
+        return res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    }
+    res.status(404).json({ message: 'Route not found' });
 });
 
 // Connect to MongoDB & Start server
@@ -77,7 +63,7 @@ mongoose
     .connect(process.env.MONGO_URI)
     .then(() => {
         console.log('✅ MongoDB connected');
-        app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
     })
     .catch((err) => {
         console.error('❌ MongoDB connection failed:', err.message);
