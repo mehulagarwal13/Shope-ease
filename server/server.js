@@ -42,7 +42,7 @@ if (process.env.NODE_ENV === 'production') {
     const clientPath = path.join(__dirname, '../client/dist');
     app.use(express.static(clientPath));
 
-    app.get('(.*)', (req, res) => {
+    app.get('/:any*', (req, res) => {
         if (!req.path.startsWith('/api')) {
             res.sendFile(path.join(clientPath, 'index.html'));
         } else {
@@ -55,7 +55,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // 404 handler for API routes
-app.use('/api/(.*)', (req, res) => res.status(404).json({ message: 'API route not found' }));
+app.use('/api/:any*', (req, res) => res.status(404).json({ message: 'API route not found' }));
 
 // 404 handler (general)
 app.use((req, res) => {
