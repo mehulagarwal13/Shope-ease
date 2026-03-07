@@ -38,7 +38,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/bills', billRoutes);
 
 // Serve Static Files in Production (no wildcard routes needed)
-const clientBuildPath = path.resolve(process.cwd(), 'client', 'dist');
+const clientBuildPath = path.resolve(__dirname, '..', 'client', 'dist');
 
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(clientBuildPath));
