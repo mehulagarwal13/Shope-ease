@@ -38,7 +38,11 @@ app.use('/api/products', productRoutes);
 app.use('/api/bills', billRoutes);
 
 // Serve Static Files in Production (no wildcard routes needed)
+const fs = require('fs');
 const clientBuildPath = path.resolve(__dirname, '..', 'client', 'dist');
+console.log('[Server] clientBuildPath:', clientBuildPath);
+console.log('[Server] dist exists:', fs.existsSync(clientBuildPath));
+console.log('[Server] index.html exists:', fs.existsSync(path.join(clientBuildPath, 'index.html')));
 
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(clientBuildPath));
@@ -46,14 +50,16 @@ if (process.env.NODE_ENV === 'production') {
 
 // Error handler
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error('[Error]', err.message);
     res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
 // Catch-all: serve index.html for frontend routes in production
 app.use((req, res) => {
     if (process.env.NODE_ENV === 'production' && !req.path.startsWith('/api')) {
-        return res.sendFile(path.join(clientBuildPath, 'index.html'));
+        const indexPath = path.join(clientBuildPath, 'index.html');
+        console.log('[Catch-all] sending index.html for:', req.path, '| file exists:', fs.existsSync(indexPath));
+        return res.sendFile(indexPath);
     }
     res.status(404).json({ message: 'Route not found' });
 });
