@@ -15,33 +15,64 @@ const signup = async (req, res) => {
     try {
         const { shopName, ownerName, email, password, phone, address, gstNumber } = req.body;
 
-        if (!shopName || !ownerName || !email || !password) {
-            return res.status(400).json({ message: 'Please fill all required fields' });
+        // Validate required fields explicitly
+        const missing = [];
+        if (!shopName || !shopName.toString().trim()) missing.push('shopName');
+        if (!ownerName || !ownerName.toString().trim()) missing.push('ownerName');
+        if (!email || !email.toString().trim()) missing.push('email');
+        if (!password || !password.toString().trim()) missing.push('password');
+
+        if (missing.length > 0) {
+            return res.status(400).json({
+                message: `Missing required fields: ${missing.join(', ')}`
+            });
         }
+
         if (password.length < 8) {
             return res.status(400).json({ message: 'Password must be at least 8 characters' });
         }
 
-        const existingUser = await User.findOne({ email });
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: 'Enter a valid email address' });
+        }
+
+        const existingUser = await User.findOne({ email: email.toLowerCase().trim() });
         if (existingUser) {
-            return res.status(400).json({ message: 'Email already registered' });
+            return res.status(409).json({ message: 'Email already registered' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 12);
         const user = await User.create({
-            shopName,
-            ownerName,
-            email,
+            shopName: shopName.trim(),
+            ownerName: ownerName.trim(),
+            email: email.toLowerCase().trim(),
             password: hashedPassword,
-            phone,
-            address,
-            gstNumber
+            phone: phone ? phone.trim() : undefined,
+            address: address ? address.trim() : undefined,
+            gstNumber: gstNumber ? gstNumber.trim() : undefined
         });
 
         res.status(201).json({ message: 'Account created successfully' });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server error', error: err.message });
+        console.error('Signup error:', err);
+
+        // Handle MongoDB duplicate key error (E11000)
+        if (err.code === 11000) {
+            const field = Object.keys(err.keyPattern || {})[0] || 'field';
+            return res.status(409).json({
+                message: `An account with this ${field} already exists.`
+            });
+        }
+
+        // Handle Mongoose validation errors
+        if (err.name === 'ValidationError') {
+            const messages = Object.values(err.errors).map(e => e.message);
+            return res.status(400).json({ message: messages.join(', ') });
+        }
+
+        res.status(500).json({ message: 'Server error. Please try again later.' });
     }
 };
 
