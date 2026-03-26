@@ -32,28 +32,20 @@ const billSchema = new mongoose.Schema({
 billSchema.index({ userId: 1, billNumber: 1 }, { unique: true });
 
 // Auto-generate bill number before saving (Robust against deletions)
-billSchema.pre('save', async function (next) {
+billSchema.pre('save', async function () {
     if (!this.billNumber) {
-        try {
-            const lastBill = await mongoose.model('Bill')
-                .findOne({ userId: this.userId })
-                .sort({ createdAt: -1 });
+        const lastBill = await this.constructor
+            .findOne({ userId: this.userId })
+            .sort({ createdAt: -1 });
 
-            let nextNum = 1;
-            if (lastBill && lastBill.billNumber) {
-                // Extract number from last bill (e.g., "BILL-0010" -> 10)
-                const match = lastBill.billNumber.match(/BILL-(\d+)/);
-                if (match) {
-                    nextNum = parseInt(match[1]) + 1;
-                }
+        let nextNum = 1;
+        if (lastBill && lastBill.billNumber) {
+            const match = lastBill.billNumber.match(/BILL-(\d+)/);
+            if (match) {
+                nextNum = parseInt(match[1]) + 1;
             }
-            this.billNumber = `BILL-${String(nextNum).padStart(4, '0')}`;
-            next();
-        } catch (err) {
-            next(err);
         }
-    } else {
-        next();
+        this.billNumber = `BILL-${String(nextNum).padStart(4, '0')}`;
     }
 });
 

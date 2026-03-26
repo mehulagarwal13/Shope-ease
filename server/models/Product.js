@@ -24,28 +24,20 @@ productSchema.index({ userId: 1, sku: 1 }, { unique: true, sparse: true });
 productSchema.index({ userId: 1, productName: 1, companyName: 1 }, { unique: true });
 
 // Auto-generate SKU before saving (Robust against deletions)
-productSchema.pre('save', async function (next) {
+productSchema.pre('save', async function () {
     if (!this.sku) {
-        try {
-            const lastProduct = await mongoose.model('Product')
-                .findOne({ userId: this.userId })
-                .sort({ createdAt: -1 });
+        const lastProduct = await this.constructor
+            .findOne({ userId: this.userId })
+            .sort({ createdAt: -1 });
 
-            let nextNum = 1;
-            if (lastProduct && lastProduct.sku) {
-                // Extract number from last SKU (e.g., "SKU-0010" -> 10)
-                const match = lastProduct.sku.match(/SKU-(\d+)/);
-                if (match) {
-                    nextNum = parseInt(match[1]) + 1;
-                }
+        let nextNum = 1;
+        if (lastProduct && lastProduct.sku) {
+            const match = lastProduct.sku.match(/SKU-(\d+)/);
+            if (match) {
+                nextNum = parseInt(match[1]) + 1;
             }
-            this.sku = `SKU-${String(nextNum).padStart(4, '0')}`;
-            next();
-        } catch (err) {
-            next(err);
         }
-    } else {
-        next();
+        this.sku = `SKU-${String(nextNum).padStart(4, '0')}`;
     }
 });
 
