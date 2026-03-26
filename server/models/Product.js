@@ -9,7 +9,7 @@ const productSchema = new mongoose.Schema({
         required: true,
         enum: ['Electronics', 'FMCG', 'Pharma', 'Clothing', 'Grocery', 'Other']
     },
-    sku: { type: String, unique: true, sparse: true },
+    sku: { type: String },
     quantity: { type: Number, required: true, min: 0 },
     pricePerUnit: { type: Number, required: true, min: 0 },
     sellingPrice: { type: Number, required: true, min: 0 },
@@ -19,11 +19,33 @@ const productSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Auto-generate SKU before saving
-productSchema.pre('save', async function () {
+// Compound unique indexes per user
+productSchema.index({ userId: 1, sku: 1 }, { unique: true, sparse: true });
+productSchema.index({ userId: 1, productName: 1, companyName: 1 }, { unique: true });
+
+// Auto-generate SKU before saving (Robust against deletions)
+productSchema.pre('save', async function (next) {
     if (!this.sku) {
-        const count = await mongoose.model('Product').countDocuments({ userId: this.userId });
-        this.sku = `SKU-${String(count + 1).padStart(4, '0')}`;
+        try {
+            const lastProduct = await mongoose.model('Product')
+                .findOne({ userId: this.userId })
+                .sort({ createdAt: -1 });
+
+            let nextNum = 1;
+            if (lastProduct && lastProduct.sku) {
+                // Extract number from last SKU (e.g., "SKU-0010" -> 10)
+                const match = lastProduct.sku.match(/SKU-(\d+)/);
+                if (match) {
+                    nextNum = parseInt(match[1]) + 1;
+                }
+            }
+            this.sku = `SKU-${String(nextNum).padStart(4, '0')}`;
+            next();
+        } catch (err) {
+            next(err);
+        }
+    } else {
+        next();
     }
 });
 

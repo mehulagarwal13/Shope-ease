@@ -12,7 +12,7 @@ const billItemSchema = new mongoose.Schema({
 
 const billSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    billNumber: { type: String, unique: true },
+    billNumber: { type: String },
     customerName: { type: String, trim: true },
     customerPhone: { type: String, trim: true },
     items: [billItemSchema],
@@ -28,11 +28,32 @@ const billSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Auto-generate bill number before saving
-billSchema.pre('save', async function () {
+// Add compound index to make billNumber unique per user
+billSchema.index({ userId: 1, billNumber: 1 }, { unique: true });
+
+// Auto-generate bill number before saving (Robust against deletions)
+billSchema.pre('save', async function (next) {
     if (!this.billNumber) {
-        const count = await mongoose.model('Bill').countDocuments({ userId: this.userId });
-        this.billNumber = `BILL-${String(count + 1).padStart(4, '0')}`;
+        try {
+            const lastBill = await mongoose.model('Bill')
+                .findOne({ userId: this.userId })
+                .sort({ createdAt: -1 });
+
+            let nextNum = 1;
+            if (lastBill && lastBill.billNumber) {
+                // Extract number from last bill (e.g., "BILL-0010" -> 10)
+                const match = lastBill.billNumber.match(/BILL-(\d+)/);
+                if (match) {
+                    nextNum = parseInt(match[1]) + 1;
+                }
+            }
+            this.billNumber = `BILL-${String(nextNum).padStart(4, '0')}`;
+            next();
+        } catch (err) {
+            next(err);
+        }
+    } else {
+        next();
     }
 });
 

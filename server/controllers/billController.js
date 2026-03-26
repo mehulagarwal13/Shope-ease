@@ -70,8 +70,21 @@ const createBill = async (req, res) => {
 
         res.status(201).json(bill);
     } catch (err) {
-        console.error('createBill error:', err.message);
-        res.status(500).json({ message: 'Server error', error: err.message });
+        console.error('createBill error:', err);
+        
+        // Handle duplicate key error (E11000)
+        if (err.code === 11000) {
+            const field = Object.keys(err.keyPattern || {})[0] || 'field';
+            return res.status(409).json({
+                message: `Constraint violation: Duplicate ${field} detected.`
+            });
+        }
+
+        res.status(500).json({ 
+            message: 'Server error', 
+            error: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+        });
     }
 };
 
