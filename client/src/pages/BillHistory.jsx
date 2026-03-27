@@ -176,7 +176,7 @@ const BillHistory = () => {
                                 <div className="text-center border-b-2 border-gray-800 pb-4 mb-4">
                                     <h1 className="text-2xl font-bold">{user?.shopName || 'ShopEase'}</h1>
                                     {user?.address && <p className="text-xs mt-0.5">{user.address}</p>}
-                                    <p className="text-xs">{user?.phone && `📞 ${user.phone}`} {user?.gstNumber && `| GST: ${user.gstNumber}`}</p>
+                                    <p className="text-xs">{user?.gstNumber && `GST: ${user.gstNumber}`}</p>
                                 </div>
 
                                 <div className="flex justify-between text-xs mb-3">
